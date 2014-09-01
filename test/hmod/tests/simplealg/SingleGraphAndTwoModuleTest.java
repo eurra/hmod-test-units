@@ -3,14 +3,18 @@ package hmod.tests.simplealg;
 
 import static flexbuilders.basic.BasicBuilders.builderFor;
 import flexbuilders.core.BuildException;
-import flexbuilders.graph.BuilderGraph;
+import flexbuilders.graph.AutoLoadResolver;
+import flexbuilders.graph.SecondaryIdsResolver;
+import flexbuilders.graph.ExtensibleGraph;
 import static flexbuilders.graph.GraphFactory.graph;
-import static flexbuilders.graph.GraphFactory.scannerGraph;
-import flexbuilders.graph.ScannableGraph;
+import flexbuilders.graph.NodeGroupData;
 import hmod.core.Algorithm;
-import hmod.simplealg.TestIdsB;
-import hmod.simplealg.TestIdsC;
+import hmod.simplealg.TestDataLoaders;
+import hmod.simplealg.TestHeuristicLoaders;
+import hmod.simplealg.TestIds;
+import hmod.solvers.common.ac.HeuristicDataLoaders;
 import hmod.solvers.common.ac.HeuristicIds;
+import hmod.solvers.common.ac.HeuristicStartLoader;
 import optefx.util.output.OutputConfigBuilder;
 import optefx.util.output.OutputManager;
 import org.junit.BeforeClass;
@@ -36,39 +40,123 @@ public class SingleGraphAndTwoModuleTest
     }
 
     @Test
-    public void noAutoLoad()
+    public void manualLoad()
     {        
-        BuilderGraph graph = graph();
+        ExtensibleGraph graph = graph();
         
-        graph.setValue(HeuristicIds.INIT_START, graph.loadNode(TestIdsB.INIT_START));
-        graph.setValue(HeuristicIds.ITERATION_START, graph.loadNode(TestIdsB.ITERATION_START));
-        graph.setValue(HeuristicIds.FINISH_START, graph.loadNode(TestIdsB.FINISH_START));
+        graph.setValue(HeuristicIds.ITERATION_DATA, HeuristicDataLoaders.loadIterationData(graph));
+        graph.setValue(HeuristicIds.TIME_ELAPSED_DATA, HeuristicDataLoaders.loadTimeElapsedData(graph));
+        graph.setValue(HeuristicIds.FINISH_DATA, HeuristicDataLoaders.loadFinishData(graph));
+        graph.setValue(HeuristicIds.INIT_START, graph.node(TestIds.INIT_START));
+        graph.setValue(HeuristicIds.ITERATION_START, graph.node(TestIds.ITERATION_START));
+        graph.setValue(HeuristicIds.FINISH_START, graph.node(TestIds.FINISH_START));
+        graph.setValue(HeuristicIds.MAIN_START, HeuristicStartLoader.load(graph));
+        
+        graph.setValue(TestIds.TEST_DATA, TestDataLoaders.loadTestData(graph));        
+        graph.setValue(TestIds.INIT_START, TestHeuristicLoaders.loadInitStart(graph));
+        graph.setValue(TestIds.ITERATION_START, TestHeuristicLoaders.loadIterationStart(graph));
+        graph.setValue(TestIds.FINISH_START, TestHeuristicLoaders.loadFinishStart(graph));
+                
         graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
-        Algorithm.create(graph.loadNode(HeuristicIds.MAIN_START).build()).start();
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
         
         graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
-        Algorithm.create(graph.loadNode(HeuristicIds.MAIN_START).build()).start();
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+    }
+    
+    @Test(expected = BuildException.class)
+    public void manualLoadFail()
+    {        
+        ExtensibleGraph graph = graph();
+        
+        graph.setValue(HeuristicIds.ITERATION_DATA, HeuristicDataLoaders.loadIterationData(graph));
+        graph.setValue(HeuristicIds.TIME_ELAPSED_DATA, HeuristicDataLoaders.loadTimeElapsedData(graph));
+        graph.setValue(HeuristicIds.FINISH_DATA, HeuristicDataLoaders.loadFinishData(graph));
+        graph.setValue(HeuristicIds.INIT_START, graph.node(TestIds.INIT_START));
+        graph.setValue(HeuristicIds.ITERATION_START, graph.node(TestIds.ITERATION_START));
+        //graph.setValue(HeuristicIds.FINISH_START, graph.node(TestIds.FINISH_START));
+        graph.setValue(HeuristicIds.MAIN_START, HeuristicStartLoader.load(graph));
+        
+        graph.setValue(TestIds.TEST_DATA, TestDataLoaders.loadTestData(graph));        
+        graph.setValue(TestIds.INIT_START, TestHeuristicLoaders.loadInitStart(graph));
+        graph.setValue(TestIds.ITERATION_START, TestHeuristicLoaders.loadIterationStart(graph));
+        graph.setValue(TestIds.FINISH_START, TestHeuristicLoaders.loadFinishStart(graph));
+                
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
     }
     
     @Test
-    public void partialAutoLoad()
+    public void autoLoad()
     {        
-        BuilderGraph graph = graph();
+        ExtensibleGraph graph = graph().
+            addResolver(new AutoLoadResolver());
         
-        graph.loadNode(TestIdsC.INIT_START);
-        graph.loadNode(TestIdsC.ITERATION_START);
-        graph.loadNode(TestIdsC.FINISH_START);
+        graph.setValue(HeuristicIds.INIT_START, graph.node(TestIds.INIT_START));
+        graph.setValue(HeuristicIds.ITERATION_START, graph.node(TestIds.ITERATION_START));
+        graph.setValue(HeuristicIds.FINISH_START, graph.node(TestIds.FINISH_START));
+        
         graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
-        Algorithm.create(graph.loadNode(HeuristicIds.MAIN_START).build()).start();
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
         
         graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
-        Algorithm.create(graph.loadNode(HeuristicIds.MAIN_START).build()).start();
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+    }
+    
+    @Test(expected = BuildException.class)
+    public void autoLoadFail()
+    {        
+        ExtensibleGraph graph = graph().
+            addResolver(new AutoLoadResolver());
+        
+        graph.setValue(HeuristicIds.INIT_START, graph.node(TestIds.INIT_START));
+        //graph.setValue(HeuristicIds.ITERATION_START, graph.node(TestIds.ITERATION_START));
+        graph.setValue(HeuristicIds.FINISH_START, graph.node(TestIds.FINISH_START));
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
     }
     
     @Test
+    public void autoSet()
+    {
+        ExtensibleGraph graph = graph().
+            addData(new NodeGroupData(TestIds.class)).
+            addResolver(new AutoLoadResolver()).
+            addResolver(new SecondaryIdsResolver());
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+    }
+    
+    @Test(expected = BuildException.class)
+    public void autoSetFail()
+    {
+        ExtensibleGraph graph = graph().
+            addData(new NodeGroupData(HeuristicIds.class)).
+            addResolver(new AutoLoadResolver()).
+            addResolver(new SecondaryIdsResolver());
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+        
+        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
+        Algorithm.create(graph.node(HeuristicIds.MAIN_START).build()).start();
+    }
+    
+    /*@Test
     public void fullAutoLoad()
     {
-        ScannableGraph graph = scannerGraph();
+        ExtensibleGraph graph = graph();
         
         graph.findNodes("hmod.simplealg.TestIdsC");        
         graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
@@ -76,15 +164,5 @@ public class SingleGraphAndTwoModuleTest
         
         graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(20));
         Algorithm.create(graph.loadNode(HeuristicIds.MAIN_START).build()).start();
-    }
-    
-    @Test(expected = BuildException.class)
-    public void fullAutoLoadFail()
-    {
-        ScannableGraph graph = scannerGraph();
-        
-        graph.findNodes("hmod.solvers.common.ac.HeuristicIds");        
-        graph.setValue(HeuristicIds.MAX_ITERATION_CONFIG, builderFor(10));        
-        graph.loadNode(HeuristicIds.MAIN_START).build();
-    }
+    }*/
 }

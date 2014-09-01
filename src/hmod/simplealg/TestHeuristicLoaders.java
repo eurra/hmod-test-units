@@ -12,36 +12,27 @@ import hmod.test.TestOperatorFactory;
  *
  * @author Enrique Urra C.
  */
-class TestHeuristicLoaders
+public final class TestHeuristicLoaders
 {
-    public static NestedBuilder<Step> initStartLoader(BuilderGraph graph) throws BuildException
+    public static NestedBuilder<Step> loadInitStart(BuilderGraph graph) throws BuildException
     {
         TestOperatorFactory ops = TestOperatorFactory.getInstance();
-        NestedBuilder testData = graph.loadNode(TestIdsA.TEST_DATA);
+        NestedBuilder testData = graph.node(TestIds.TEST_DATA);
 
         return algorithmBlock().
             run(ops::testInit, testData);
     }
 
-    public static NestedBuilder<Step> iterationStartALoader(BuilderGraph graph) throws BuildException
+    public static NestedBuilder<Step> loadIterationStart(BuilderGraph graph) throws BuildException
     {
         TestOperatorFactory ops = TestOperatorFactory.getInstance();
-        NestedBuilder testData = graph.loadNode(TestIdsA.TEST_DATA);
+        NestedBuilder testData = graph.node(TestIds.TEST_DATA);
 
         return algorithmBlock().
             run(ops::test, testData);
     }
     
-    public static NestedBuilder<Step> loadIterationBLoader(BuilderGraph graph) throws BuildException
-    {
-        TestOperatorFactory ops = TestOperatorFactory.getInstance();
-        NestedBuilder testData = graph.loadNode(TestIdsA.TEST_DATA);
-
-        return algorithmBlock().
-            run(ops::test, testData);
-    }
-    
-    public static NestedBuilder<Step> finishStartLoader(BuilderGraph graph) throws BuildException
+    public static NestedBuilder<Step> loadFinishStart(BuilderGraph graph) throws BuildException
     {
         TestOperatorFactory ops = TestOperatorFactory.getInstance();
 

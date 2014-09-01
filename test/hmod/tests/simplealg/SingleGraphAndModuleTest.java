@@ -3,14 +3,14 @@ package hmod.tests.simplealg;
 
 import static flexbuilders.basic.BasicBuilders.builderFor;
 import flexbuilders.core.BuildException;
-import flexbuilders.graph.BuilderGraph;
+import flexbuilders.graph.AutoLoadResolver;
+import flexbuilders.graph.ExtensibleGraph;
 import static flexbuilders.graph.GraphFactory.graph;
-import static flexbuilders.graph.GraphFactory.scannerGraph;
-import flexbuilders.graph.ScannableGraph;
 import hmod.core.Algorithm;
-import hmod.simplealg.TestIdsA;
-import hmod.simplealg.TestIdsB;
-import hmod.simplealg.TestIdsC;
+import hmod.simplealg.TestDataLoaders;
+import hmod.simplealg.MainStartLoader;
+import hmod.simplealg.TestHeuristicLoaders;
+import hmod.simplealg.TestIds;
 import optefx.util.output.OutputConfigBuilder;
 import optefx.util.output.OutputManager;
 import org.junit.BeforeClass;
@@ -34,54 +34,44 @@ public class SingleGraphAndModuleTest
                 build()
         ); 
     }
-
-    @Test
-    public void noAutoLoad()
-    {
-        BuilderGraph graph = graph();
-        
-        graph.setValue(TestIdsA.INIT_START, graph.loadNode(TestIdsB.INIT_START));
-        graph.setValue(TestIdsA.ITERATION_START, graph.loadNode(TestIdsB.ITERATION_START));
-        graph.setValue(TestIdsA.FINISH_START, graph.loadNode(TestIdsB.FINISH_START));
-        graph.setValue(TestIdsA.ITERATION_CONFIG, builderFor(10));
-        Algorithm.create(graph.loadNode(TestIdsB.MAIN_START).build()).start();
-        
-        graph.setValue(TestIdsA.ITERATION_CONFIG, builderFor(15));
-        Algorithm.create(graph.loadNode(TestIdsB.MAIN_START).build()).start();
-    }
-        
-    @Test
-    public void partialAutoLoad()
-    {
-        BuilderGraph graph = scannerGraph();
-        
-        graph.loadNode(TestIdsC.INIT_START);
-        graph.loadNode(TestIdsC.ITERATION_START);
-        graph.loadNode(TestIdsC.FINISH_START);
-        graph.setValue(TestIdsA.ITERATION_CONFIG, builderFor(10));
-        Algorithm.create(graph.loadNode(TestIdsB.MAIN_START).build()).start();
-        
-        graph.setValue(TestIdsA.ITERATION_CONFIG, builderFor(15));
-        Algorithm.create(graph.loadNode(TestIdsB.MAIN_START).build()).start();
-    }
     
     @Test
-    public void fullAutoLoad()
-    {
-        ScannableGraph graph = scannerGraph();
+    public void manualLoad()
+    {        
+        ExtensibleGraph graph = graph();
         
-        graph.findNodes("hmod.simplealg.TestIdsC");
-        graph.setValue(TestIdsA.ITERATION_CONFIG, builderFor(10));
-        Algorithm.create(graph.loadNode(TestIdsB.MAIN_START).build()).start();
+        graph.setValue(TestIds.ITERATION_DATA, TestDataLoaders.loadIterationData(graph));
+        graph.setValue(TestIds.TEST_DATA, TestDataLoaders.loadTestData(graph));
         
-        graph.setValue(TestIdsA.ITERATION_CONFIG, builderFor(15));
-        Algorithm.create(graph.loadNode(TestIdsB.MAIN_START).build()).start();
+        graph.setValue(TestIds.INIT_START, TestHeuristicLoaders.loadInitStart(graph));
+        graph.setValue(TestIds.ITERATION_START, TestHeuristicLoaders.loadIterationStart(graph));
+        graph.setValue(TestIds.FINISH_START, TestHeuristicLoaders.loadFinishStart(graph));
+        graph.setValue(TestIds.MAIN_START, MainStartLoader.load(graph));
+        
+        graph.setValue(TestIds.ITERATION_CONFIG, builderFor(10));
+        Algorithm.create(graph.node(TestIds.MAIN_START).build()).start();
+        
+        graph.setValue(TestIds.ITERATION_CONFIG, builderFor(15));
+        Algorithm.create(graph.node(TestIds.MAIN_START).build()).start();
+    }
+        
+    @Test
+    public void autoLoad()
+    {        
+        ExtensibleGraph graph = graph().
+            addResolver(new AutoLoadResolver());
+        
+        graph.setValue(TestIds.ITERATION_CONFIG, builderFor(10));
+        Algorithm.create(graph.node(TestIds.MAIN_START).build()).start();
+        
+        graph.setValue(TestIds.ITERATION_CONFIG, builderFor(15));
+        Algorithm.create(graph.node(TestIds.MAIN_START).build()).start();
     }
     
     @Test(expected = BuildException.class)
     public void autoLoadFail()
     {
-        ScannableGraph graph = scannerGraph();
-        graph.findNodes("aClassThatNotExists");
+        ExtensibleGraph graph = graph();
+        graph.node(TestIds.MAIN_START).build();
     }
 }

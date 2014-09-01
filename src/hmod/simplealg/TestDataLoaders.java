@@ -15,17 +15,17 @@ import hmod.test.TestHandlerFactory;
  *
  * @author Enrique Urra C.
  */
-class DataLoaders
+public final class TestDataLoaders
 {
-    public static NestedBuilder<TestHandler> testDataLoader(BuilderGraph graph) throws BuildException
+    public static NestedBuilder<TestHandler> loadTestData(BuilderGraph graph) throws BuildException
     {
         TestHandlerFactory testHandlers = TestHandlerFactory.getInstance();
         return argFactory(testHandlers::test, builderFor(0));
     }
     
-    public static NestedBuilder<IterationHandler> iterationDataLoader(BuilderGraph graph) throws BuildException
+    public static NestedBuilder<IterationHandler> loadIterationData(BuilderGraph graph) throws BuildException
     {
         HeuristicHandlerFactory heuristicHandlers = HeuristicHandlerFactory.getInstance();
-        return argFactory(heuristicHandlers::iteration, graph.getNode(TestIdsA.ITERATION_CONFIG));
+        return argFactory(heuristicHandlers::iteration, graph.node(TestIds.ITERATION_CONFIG));
     }
 }
